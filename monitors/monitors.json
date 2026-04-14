@@ -8,8 +8,8 @@
     },
     {
       "name": "vault-file-changes",
-      "description": "Vault file change watcher — notifies when vault topics or decisions are modified externally (Obsidian UI, other sessions, git pull)",
-      "command": "fswatch -r --event Created --event Updated --event Removed ~/Documents/Obsidian/AI-Work/topics/ ~/Documents/Obsidian/AI-Work/decisions/ ~/Documents/Obsidian/AI-Home/topics/ ~/Documents/Obsidian/AI-Home/decisions/ 2>/dev/null | while IFS= read -r path; do echo \"Vault changed: $path\"; done",
+      "description": "Vault file change watcher — polls topics/decisions directories every 30s and reports externally modified files",
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/vault-watch.sh",
       "persistent": true
     }
   ]
