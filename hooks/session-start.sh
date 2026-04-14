@@ -4,7 +4,7 @@
 # This hook runs at the start of every Claude Code session to:
 # 1. Discover all vaults from MCP config (primary + secondary, work + personal modes)
 # 2. Pull latest changes from remote for each git-tracked vault
-# 3. Show user tip about /mb and /close commands
+# 3. Show user tip about /vault:mb and /vault:close commands
 
 # MCP config discovery - search standard locations (same as MCP server)
 # 1. Environment variable override
@@ -119,7 +119,7 @@ if [[ "$SESSION_ALREADY_STARTED" == false ]]; then
   # Output only JSON - Claude Code can't parse mixed plain text + JSON
   cat <<EOF
 {
-  "systemMessage": "💡 Tip: Run /work or /personal to switch vaults and load context. Run /close when finished to save this session."
+  "systemMessage": "💡 Tip: Run /vault:work or /vault:personal to switch vaults and load context. Run /vault:close when finished to save this session."
 }
 EOF
 fi
