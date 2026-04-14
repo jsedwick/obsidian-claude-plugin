@@ -1,0 +1,16 @@
+{
+  "monitors": [
+    {
+      "name": "mcp-server-errors",
+      "description": "Obsidian MCP server error log — surfaces ERROR/FATAL/uncaughtException from the server log in real time",
+      "command": "tail -f /tmp/obsidian-mcp-server.log 2>/dev/null | grep --line-buffered 'ERROR\\|FATAL\\|uncaughtException'",
+      "persistent": true
+    },
+    {
+      "name": "vault-file-changes",
+      "description": "Vault file change watcher — notifies when vault topics or decisions are modified externally (Obsidian UI, other sessions, git pull)",
+      "command": "fswatch -r --event Created --event Updated --event Removed ~/Documents/Obsidian/AI-Work/topics/ ~/Documents/Obsidian/AI-Work/decisions/ ~/Documents/Obsidian/AI-Home/topics/ ~/Documents/Obsidian/AI-Home/decisions/ 2>/dev/null | while IFS= read -r path; do echo \"Vault changed: $path\"; done",
+      "persistent": true
+    }
+  ]
+}

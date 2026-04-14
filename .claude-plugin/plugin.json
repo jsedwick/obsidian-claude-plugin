@@ -1,0 +1,11 @@
+{
+  "name": "vault",
+  "version": "1.0.0",
+  "description": "Obsidian vault integration for long-term memory, session tracking, and knowledge management across Claude Code sessions",
+  "author": {
+    "name": "Jesse Sedwick"
+  },
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "monitors": "./monitors/monitors.json"
+}
