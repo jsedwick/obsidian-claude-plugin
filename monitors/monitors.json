@@ -11,6 +11,24 @@
       "description": "Vault file change watcher — polls topics/decisions directories every 30s and reports externally modified files",
       "command": "${CLAUDE_PLUGIN_ROOT}/bin/vault-watch.sh",
       "persistent": true
+    },
+    {
+      "name": "git-commit-watcher",
+      "description": "Git commit watcher — polls active project repos every 60s and reports new commits from other sessions or collaborators",
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/git-commit-watch.sh",
+      "persistent": true
+    },
+    {
+      "name": "stale-topic-check",
+      "description": "Stale topic detector — one-shot scan at session start for topics not reviewed in 30+ days",
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/stale-topic-check.sh",
+      "persistent": false
+    },
+    {
+      "name": "build-watcher",
+      "description": "Build error watcher — tails /tmp/*-build.log files for TypeScript and build errors across any project",
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/build-watch.sh",
+      "persistent": true
     }
   ]
 }

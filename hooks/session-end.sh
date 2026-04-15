@@ -50,6 +50,13 @@ fi
 COMMIT_COUNT=0
 PUSH_ERRORS=()
 
+# Detect bridge mode: skip git push when running as a -p subprocess
+# (each bridge message is a separate process; pushing on every exit is wasteful and delays UI)
+SKIP_PUSH=false
+if [[ -n "$CHAT_BRIDGE_SESSION" ]]; then
+  SKIP_PUSH=true
+fi
+
 # Sync each vault
 while IFS= read -r VAULT_PATH; do
   [[ -z "$VAULT_PATH" ]] && continue
@@ -71,22 +78,27 @@ while IFS= read -r VAULT_PATH; do
     COMMIT_COUNT=$((COMMIT_COUNT + 1))
   fi
 
-  # Push to remote
-  if ! git push --quiet 2>&1; then
-    PUSH_ERRORS+=("$VAULT_PATH")
+  # Push to remote (skip in bridge mode — /vault:close handles push for bridge sessions)
+  if [[ "$SKIP_PUSH" == false ]]; then
+    if ! git push --quiet 2>&1; then
+      PUSH_ERRORS+=("$VAULT_PATH")
+    fi
   fi
 done <<< "$VAULT_PATHS"
 
 # Report results
 if [ $COMMIT_COUNT -gt 0 ]; then
-  echo "📝 Auto-committed changes in $COMMIT_COUNT vault(s)" >&2
+  echo "Auto-committed changes in $COMMIT_COUNT vault(s)" >&2
 fi
 
-if [ ${#PUSH_ERRORS[@]} -eq 0 ]; then
-  echo "✅ All vaults synced to remote" >&2
+if [[ "$SKIP_PUSH" == true ]]; then
+  # Silent in bridge mode — commits saved locally, push deferred to /vault:close
+  :
+elif [ ${#PUSH_ERRORS[@]} -eq 0 ]; then
+  echo "All vaults synced to remote" >&2
 else
   cat >&2 <<EOF
-⚠️  Git push failed for some vaults - changes saved locally
+Git push failed for some vaults - changes saved locally
 
 Failed vaults:
 $(printf '  • %s\n' "${PUSH_ERRORS[@]}")
