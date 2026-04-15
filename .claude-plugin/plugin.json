@@ -6,5 +6,6 @@
     "name": "Jesse Sedwick"
   },
   "skills": "./skills/",
-  "hooks": "./hooks/hooks.json"
+  "hooks": "./hooks/hooks.json",
+  "monitors": "./monitors/monitors.json"
 }
