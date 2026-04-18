@@ -13,4 +13,4 @@ Call `switch_mode` with `mode: "<argument>"` to switch to that mode.
 **If argument is anything else:**
 Respond with: "Invalid mode. Use `/mode` to see current mode, or `/mode work` or `/mode personal` to switch."
 
-Output the result directly with no additional commentary.
+After the tool returns, render the result as your text response so the user sees it — the tool-call panel alone is not sufficient (some chat UIs collapse or hide it). No additional commentary beyond what the tool returned.
