@@ -8,6 +8,8 @@ If the user provided a workflow name as an argument (e.g., `/workflow create-sta
 
 If no workflow name was provided (just `/workflow`), omit the workflow_name parameter to list all available workflows.
 
-After the tool returns, render the result as your text response so the user sees it — the tool-call panel alone is not sufficient (some chat UIs collapse or hide it). Reproduce the tool's content verbatim as assistant text, without extra commentary, explanations, or usage tips.
+After the tool returns, handle the output based on what the workflow is:
 
-If the workflow content describes actions to perform (most workflows do — e.g. `verify-work`, `refresh-calendar-cache`), then after rendering the content, proceed to execute those steps and report the outcome. If the workflow is purely informational or the user invoked `/workflow` with no arguments (list mode), stop after rendering.
+- **List mode** (user invoked `/workflow` with no arguments — the tool returned a list of available workflows): render the tool's content verbatim as assistant text — the tool-call panel alone is not sufficient (some chat UIs collapse or hide it). Stop after rendering.
+- **Informational workflow** (the content is a reference doc with no action steps for you to carry out): render the tool's content verbatim as assistant text. Stop after rendering.
+- **Actionable workflow** (the content describes steps for you to perform — e.g. `verify-work`, `refresh-calendar-cache`): do NOT echo the workflow's instructions into chat. The content is a script for you to follow, not a briefing for the user. Execute the steps directly. Only produce assistant text when the workflow explicitly requires input or confirmation from the user, and at the end when reporting the outcome (what ran, what you found, any issues).
