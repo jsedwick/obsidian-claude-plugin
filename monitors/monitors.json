@@ -29,6 +29,12 @@
       "description": "Build error watcher — tails /tmp/*-build.log files for TypeScript and build errors across any project",
       "command": "${CLAUDE_PLUGIN_ROOT}/bin/build-watch.sh",
       "persistent": true
+    },
+    {
+      "name": "bridge-restart-watch",
+      "description": "Claude Chat Bridge lifecycle watcher — polls launchctl every 3s and on PID change actively polls the HTTPS health endpoint until it responds, emitting RESTART DETECTED and RESTART COMPLETE events so Claude stops spamming kickstart",
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/bridge-restart-watch.sh",
+      "persistent": true
     }
   ]
 }

@@ -16,6 +16,7 @@ This command combines mode switching and memory base loading for a quick work se
    - `Monitor` with `command: "${HOME}/Projects/obsidian-claude-plugin/bin/stale-topic-check.sh"`, `description: "Stale topic check"`, `persistent: false`
    - `Monitor` with `command: "${HOME}/Projects/obsidian-claude-plugin/bin/git-commit-watch.sh"`, `description: "Git commit watcher"`, `persistent: true`
    - `Monitor` with `command: "tail -f /tmp/obsidian-mcp-server.log 2>/dev/null | grep --line-buffered 'ERROR\\|FATAL\\|uncaughtException'"`, `description: "MCP server error monitor"`, `persistent: true`
+   - `Monitor` with `command: "${HOME}/Projects/obsidian-claude-plugin/bin/bridge-restart-watch.sh"`, `description: "Claude Chat Bridge restart watcher"`, `persistent: true`
 
 4. **Discover and handle vault-defined monitors:**
    Call `mcp__obsidian-context-manager__list_vault_monitors` to discover custom monitors from the vault's `monitors/` directory. If no monitors are returned, skip this step silently.
