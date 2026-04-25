@@ -1,0 +1,8 @@
+# git-commit-watch repo list — one absolute (or ~-prefixed) path per line.
+# Blank lines and # comments are ignored.
+# Copy this file to git-commit-watch.list (which is gitignored) to activate.
+#
+# Example entries:
+# ~/Projects/obsidian-mcp-server
+# ~/Projects/claude-chat-bridge
+# ~/Projects/obsidian-claude-plugin

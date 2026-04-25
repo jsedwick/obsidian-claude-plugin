@@ -3,16 +3,36 @@
 # Detects commits from other sessions, collaborators, or git operations
 # outside the current Claude Code session. Outputs new commit info to stdout
 # so the Monitor tool surfaces them to Claude in real time.
+#
+# Repo list resolution (first match wins):
+#   1. $GIT_COMMIT_WATCH_REPOS env var — colon-separated absolute paths
+#   2. bin/git-commit-watch.list (sibling to this script) — one path per line,
+#      # comments and blank lines ignored. Gitignored; copy from .example to start.
+#   3. No repos → script exits silently.
 
 MARKER_DIR="/tmp/git-commit-watch"
 INTERVAL=60
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIST_FILE="${SCRIPT_DIR}/git-commit-watch.list"
 
-# Repos to watch — add/remove as needed
-WATCH_REPOS=(
-  "${HOME}/Projects/obsidian-mcp-server"
-  "${HOME}/Projects/claude-chat-bridge"
-  "${HOME}/Projects/obsidian-claude-plugin"
-)
+WATCH_REPOS=()
+
+if [[ -n "$GIT_COMMIT_WATCH_REPOS" ]]; then
+  IFS=':' read -ra WATCH_REPOS <<< "$GIT_COMMIT_WATCH_REPOS"
+elif [[ -f "$LIST_FILE" ]]; then
+  while IFS= read -r line; do
+    # Skip blank lines and comments
+    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+    # Strip leading/trailing whitespace
+    line="${line#"${line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+    WATCH_REPOS+=("${line/#\~/$HOME}")
+  done < "$LIST_FILE"
+fi
+
+if [ ${#WATCH_REPOS[@]} -eq 0 ]; then
+  exit 0
+fi
 
 # Create marker directory if it doesn't exist
 mkdir -p "$MARKER_DIR"

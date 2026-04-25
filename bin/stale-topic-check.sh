@@ -1,12 +1,39 @@
 #!/usr/bin/env bash
 # stale-topic-check.sh — One-shot scan for topics not reviewed in 30+ days.
-# Runs at session start, reports stale topics, then exits.
+# Runs at session start, reports stale topics in the active mode's vault, exits.
 # Does NOT archive or modify anything — use find_stale_topics tool for that.
+#
+# Mode resolution: $VAULT_MODE env var (matches MCP server's logic), default "work".
+# Mode is in-memory in the MCP server, so we can't follow runtime switches —
+# but the launch-time mode is the correct one for a session-start one-shot.
 
-OBSIDIAN_ROOT="${HOME}/Documents/Obsidian"
-TOPICS_DIR="${OBSIDIAN_ROOT}/AI-Work/topics"
 THRESHOLD_DAYS=30
+MODE="${VAULT_MODE:-work}"
 
+# Discover MCP config (same search order as hooks/session-start.sh)
+if [[ -n "$MCP_CONFIG_PATH" && -f "$MCP_CONFIG_PATH" ]]; then
+  MCP_CONFIG="$MCP_CONFIG_PATH"
+elif [[ -f "$HOME/.obsidian-mcp.json" ]]; then
+  MCP_CONFIG="$HOME/.obsidian-mcp.json"
+elif [[ -f "$HOME/.config/.obsidian-mcp.json" ]]; then
+  MCP_CONFIG="$HOME/.config/.obsidian-mcp.json"
+else
+  exit 0
+fi
+
+# Resolve the primary vault path matching the active mode
+VAULT_PATH=$(node -e "
+  const c = require('$MCP_CONFIG');
+  const v = (c.primaryVaults || []).find(x => x.mode === '$MODE');
+  if (!v) process.exit(0);
+  let p = v.path;
+  if (p.endsWith('/')) p = p.slice(0, -1);
+  console.log(p);
+" 2>/dev/null)
+
+[ -z "$VAULT_PATH" ] && exit 0
+VAULT_PATH="${VAULT_PATH/#\~/$HOME}"
+TOPICS_DIR="${VAULT_PATH}/topics"
 [ -d "$TOPICS_DIR" ] || exit 0
 
 stale_count=0

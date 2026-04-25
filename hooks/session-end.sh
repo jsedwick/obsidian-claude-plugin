@@ -43,8 +43,9 @@ if [[ -f "$MCP_CONFIG" ]]; then
     console.log(Array.from(vaults).join('\n'));
   " 2>/dev/null)
 else
-  # Fallback to work vault if config not found
-  VAULT_PATHS="/Users/jsedwick/Documents/Obsidian/AI-Work"
+  # No MCP config found — skip vault sync rather than guess a hardcoded path.
+  echo "session-end: no MCP config found (checked \$MCP_CONFIG_PATH, ~/.obsidian-mcp.json, ~/.config/.obsidian-mcp.json) — skipping vault git sync" >&2
+  VAULT_PATHS=""
 fi
 
 COMMIT_COUNT=0
