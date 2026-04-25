@@ -5,7 +5,7 @@
 # do not retry" event. Designed to short-circuit Claude's restart-retry loop when
 # the bridge is already coming back up.
 
-SERVICE_LABEL="com.jsedwick.claude-chat-bridge"
+SERVICE_LABEL="${CHAT_BRIDGE_SERVICE_LABEL:-com.${USER}.claude-chat-bridge}"
 HEALTH_URL="https://localhost:${CHAT_BRIDGE_PORT:-3456}/api/health"
 POLL_INTERVAL=3
 HEALTH_TIMEOUT=30

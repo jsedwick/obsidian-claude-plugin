@@ -2,8 +2,8 @@
   "mcpServers": {
     "obsidian-context-manager": {
       "command": "node",
-      "args": ["/Users/jsedwick/Projects/obsidian-mcp-server/dist/index.js"],
-      "cwd": "/Users/jsedwick/Projects/obsidian-mcp-server",
+      "args": ["${HOME}/Projects/obsidian-mcp-server/dist/index.js"],
+      "cwd": "${HOME}/Projects/obsidian-mcp-server",
       "env": {}
     }
   }
