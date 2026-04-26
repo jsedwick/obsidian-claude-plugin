@@ -77,10 +77,12 @@ Vault Custodian   {fixes} fixes, {issues} issues
 
 If topics/decisions/projects were created, updated, or linked during the session, add them as simple lists:
 ```
-Topics Created    topic-name-1, topic-name-2 [if any]
-Topics Updated    topic-name-3, topic-name-4 [if any]
-Decisions Made    decision-name-1 [if any]
-Projects Linked   project-name [if any]
+Topics Created    topic-slug-1, topic-slug-2 [if any]
+Topics Updated    topic-slug-3, topic-slug-4 [if any]
+Decisions Made    decision-slug-1 [if any]
+Projects Linked   [[projects/<project-slug>/project|<project-name>]] [if any]
 ```
 
 **Note:** Only include lines for categories that have items. Skip empty categories.
+
+**Project rendering rule:** Project slugs are auto-generated and may include a hash suffix (e.g. `create-claude-setup-ee93a0`) that doesn't match the human-readable project name. The frontend close-summary linkifier builds the data-target as `projects/<token>/project`, so passing the bare *name* produces a broken chip. Always emit projects as full wiki-link syntax `[[projects/<slug>/project|<name>]]` — the wiki-link preprocessor displays `<name>` while routing the chip to the correct slug-based path. Both fields come from the `projects_linked` array in the `close_session` Phase 2 response (`{slug, name}`). Multiple projects separated by `, `.
