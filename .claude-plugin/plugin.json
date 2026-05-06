@@ -4,5 +4,7 @@
   "description": "Obsidian vault integration for long-term memory, session tracking, and knowledge management across Claude Code sessions",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json",
-  "monitors": "./monitors/monitors.json"
+  "experimental": {
+    "monitors": "./monitors/monitors.json"
+  }
 }
