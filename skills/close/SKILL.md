@@ -61,6 +61,22 @@ The Phase 1 close_session call will return commit analysis with `session_data`. 
 - Do NOT analyze the conversation again
 - ONLY call close_session with finalize: true and the session_data
 
+## Handoff Format (Decision 068)
+
+The `handoff` parameter MUST use the verifier-tagged carryforward format. Every forward-looking item is a checkbox bullet paired with a `**verify:**` clause; immutable past events are tagged `[historical]` and need no verifier. Narrative-prose handoffs produce zero parseable items — the chat-bridge's Open Items panel and `/vault:mb` programmatic suppression both depend on this format.
+
+```
+- [ ] PR #42 awaiting merge — **verify:** `gh pr view 42 --json state`
+- [ ] bridge restart owed for `860df06` — **verify:** bridge PID start time vs `git log -1 --format=%cI 860df06`
+- [ ] smoke test owed for `dc7ff03` — **verify:** ask user, or poke the feature in the bridge UI
+- [historical] Decision 067 shipped in `70d3298` — no verifier (immutable past event)
+```
+
+Rules:
+- Every `- [ ]` bullet must have a `**verify:**` clause (command in backticks for `verify-command`, plain text for `verify-prose`).
+- Items without a verifier must be tagged `[historical]` or dropped at write-time.
+- Narrative summary paragraphs are fine alongside the bullets — but the carryforward state itself goes in bullet form.
+
 ## Final Summary Format
 
 Present the closing summary using this exact key-value format (no tables):
