@@ -12,8 +12,7 @@ This command combines mode switching and memory base loading for a quick persona
 2. **Load memory base:**
    Call `mcp__obsidian-context-manager__get_memory_base` to load session context (user reference, recent handoffs, corrections).
 
-   **Decision 068 — interpret handoff verifier results.** Each recent handoff in `structuredContent.handoffs[].items` is the parsed carryforward bullets with verifier execution results. Apply this interpretation BEFORE reciting any forward-looking carryforward as currently true:
-   - `kind: historical` — settled past event. Never recite as live work.
+   **Decision 068 — interpret handoff verifier results.** Each recent handoff in `structuredContent.handoffs[].items` is the parsed carryforward bullets with verifier execution results. The MCP server pre-suppresses items the LLM should never act on — all `kind: historical`, plus `kind: verify-command` absence-grep patterns whose verifier already returned empty (exit ≠ 0, empty stdout, not timed-out, not skipped) — so those will not appear in your context. For items that do survive, apply this interpretation BEFORE reciting any forward-looking carryforward as currently true:
    - `kind: verify-command` + `result.exit_code === 0` — inspect `result.stdout`. If it indicates the claim is now resolved (PR merged, branch in sync, restart already done, etc.), suppress the item or note it as resolved. Otherwise surface as live with confidence.
    - `kind: verify-command` + non-zero exit / `timed_out` / `skipped_budget` — surface with explicit uncertainty. Do NOT state the claim as fact; tell the user the verifier failed and prompt for manual check.
    - `kind: verify-prose` — manual verifier (asking the user, poking the UI). Surface the prose instruction; flag the item as needing manual confirmation before action.
