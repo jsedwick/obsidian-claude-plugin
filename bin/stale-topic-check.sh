@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# stale-topic-check.sh — One-shot scan for topics not reviewed in 30+ days.
+# stale-topic-check.sh — One-shot scan for topics not reviewed in 60+ days.
 # Runs at session start, reports stale topics in the active mode's vault, exits.
 # Does NOT archive or modify anything — use find_stale_topics tool for that.
 #
@@ -7,7 +7,7 @@
 # Mode is in-memory in the MCP server, so we can't follow runtime switches —
 # but the launch-time mode is the correct one for a session-start one-shot.
 
-THRESHOLD_DAYS=30
+THRESHOLD_DAYS=60
 MODE="${VAULT_MODE:-work}"
 
 # Discover MCP config (same search order as hooks/session-start.sh)

@@ -20,7 +20,7 @@
     },
     {
       "name": "stale-topic-check",
-      "description": "Stale topic detector — one-shot scan at session start for topics not reviewed in 30+ days",
+      "description": "Stale topic detector — one-shot scan at session start for topics not reviewed in 60+ days",
       "command": "${CLAUDE_PLUGIN_ROOT}/bin/stale-topic-check.sh",
       "persistent": false
     },
