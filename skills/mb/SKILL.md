@@ -16,37 +16,29 @@ description: Load rolling memory base from recent sessions
    **Decision 023 — handoff triage menu.** After applying the Decision 068 interpretation above, identify *triage-eligible* items — bullets that need a user decision before they can stop being recited next session:
 
    - `kind: verify-prose`
-   - `kind: verify-command` whose `result` is `timed_out`, `skipped_budget`, or has non-zero `exit_code` with non-empty `stdout` (ambiguous outcome)
    - `kind: untagged-forward-looking`
 
-   Items pre-suppressed by the MCP server (`historical`, absence-grep resolved) do not appear in `items` at all, so they need no filtering on this side.
+   Items pre-suppressed by the MCP server (`historical`, absence-grep resolved) do not appear in `items` at all. `kind: verify-command` items are intentionally excluded (Phase 5+): the chat-bridge server endpoint can't execute verifier commands, so we restrict triage to kinds that don't require execution. Verify-command items remain visible in the `get_memory_base` tool-result panel and can still be tagged via direct CLI commands.
 
    If zero triage-eligible items exist across all returned handoffs, skip the triage rendering entirely.
 
-   Otherwise, at the END of the **Summarize** step (after all other content), append BOTH the structured marker (for clients like claude-chat-bridge that render a clickable card) AND the human-readable markdown list (for CLI / non-bridge clients):
+   Otherwise, at the END of the **Summarize** step (after all other content), emit ONLY the minimal marker. The chat-bridge frontend fetches `items[]` from `/api/triage/current?mode=<active>` the moment the closing `-->` arrives and renders the card instantly — the LLM no longer streams item bodies or hashes:
 
    ```
-   <!--triage-menu:v1
-   {"items":[{"n":1,"body":"<≤80-char bullet>","slug":"<source_session_slug>","hash":"<bullet_id_hash>"},{"n":2,...}]}
-   -->
+   <!--triage-menu:v1 {"ref":"latest"} -->
 
-   ## Carryforward triage
-
-   1. <bullet body, ≤80 chars> — _from <source_session_slug>_
-   2. ...
-
-   _Verbs: `<N> resolve` | `<N> dismiss` | `<N> elaborate`. Free-text input escapes triage._
+   Carryforward triage available (N eligible items) — see the card below, or type `<N> resolve` / `<N> elaborate` from CLI.
    ```
 
-   The HTML comment is invisible in rendered markdown (CLI, mobile, plain readers see only the heading + list). The chat-bridge frontend parses the JSON and replaces the heading+list block with a clickable card. Emit the JSON as a single line (no internal newlines) so the regex `<!--triage-menu:v1\s*([\s\S]*?)\s*-->` reliably extracts it.
+   Replace `N` with the count of triage-eligible items. The HTML comment is invisible in rendered markdown; the frontend regex `<!--triage-menu:v1\s*([\s\S]*?)\s*-->` extracts the payload. Emit the JSON as a single line (no internal newlines).
 
-   Track which item number maps to which `bullet_id_hash` + `source_session_slug` so the user's response can be routed back to the right tool call.
+   Track which item number maps to which `bullet_id_hash` + `source_session_slug` in your in-context view — apply the same filter (`verify-prose` + `untagged-forward-looking`) in handoff order and number sequentially. The bridge's server endpoint applies the identical filter, so its numbering matches yours; user replies referencing `1`, `2`, … resolve to the same items.
 
    When the user replies, parse:
 
-   - `<N> resolve` — call `mcp__obsidian-context-manager__tag_handoff_item` with the item's `bullet_id_hash`, `source_session_slug`, `action: "resolve"`. Remove the item from the menu. Re-render the menu if items remain; report "triage complete" if not. **Terminal.**
-   - `<N> dismiss` — same as above with `action: "dismiss"`. **Terminal.**
-   - `<N> elaborate` — load the source session via `get_session_context`; if the bullet references a topic/decision/commit slug, fetch it via the appropriate tool. Explain the item in 2–3 sentences. Then re-present the menu (item stays). **Non-terminal.**
+   - `triage:N=done,M=done,...` — **bulk submit** (chat-bridge UI). For each `N=done`, look up the item's `bullet_id_hash` + `source_session_slug` in your in-context n→item mapping. Call `mcp__obsidian-context-manager__tag_handoff_item` **serially, one after another, NOT in parallel** with `action: "resolve"` for each (items may share a source session file; parallel writes corrupt it). After all calls succeed, emit `<!--triage-update:v1 {"removed":[N,M,...]} -->` on its own line (single-line JSON, HTML comment) followed by a brief "Resolved X items." confirmation. **Do NOT re-render the menu** — the bridge consumes the marker and mutates the original card in place. **Terminal.**
+   - `<N> elaborate` — load the source session via `get_session_context`; if the bullet references a topic/decision/commit slug, fetch it via the appropriate tool. Explain the item in 2–3 sentences. **Do NOT re-render the menu** and **do NOT emit any update marker** — the original card persists in the bridge; the user can resolve or elaborate further from it. **Non-terminal.**
+   - `<N> resolve` or `<N> dismiss` — back-compat single-action for CLI / non-bridge clients. Call `tag_handoff_item` with the matching `action`, then emit `<!--triage-update:v1 {"removed":[N]} -->` followed by "Resolved item N." Do NOT re-render the menu. **Terminal.**
    - Any other input — escape hatch: treat as the user's actual task for the session and proceed normally.
 
 2. **Arm background monitors** (run all in parallel):
