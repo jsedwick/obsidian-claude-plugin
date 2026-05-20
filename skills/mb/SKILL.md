@@ -23,9 +23,13 @@ description: Load rolling memory base from recent sessions
 
    If zero triage-eligible items exist across all returned handoffs, skip the triage rendering entirely.
 
-   Otherwise, at the END of the **Summarize** step (after all other content), append:
+   Otherwise, at the END of the **Summarize** step (after all other content), append BOTH the structured marker (for clients like claude-chat-bridge that render a clickable card) AND the human-readable markdown list (for CLI / non-bridge clients):
 
    ```
+   <!--triage-menu:v1
+   {"items":[{"n":1,"body":"<≤80-char bullet>","slug":"<source_session_slug>","hash":"<bullet_id_hash>"},{"n":2,...}]}
+   -->
+
    ## Carryforward triage
 
    1. <bullet body, ≤80 chars> — _from <source_session_slug>_
@@ -33,6 +37,8 @@ description: Load rolling memory base from recent sessions
 
    _Verbs: `<N> resolve` | `<N> dismiss` | `<N> elaborate`. Free-text input escapes triage._
    ```
+
+   The HTML comment is invisible in rendered markdown (CLI, mobile, plain readers see only the heading + list). The chat-bridge frontend parses the JSON and replaces the heading+list block with a clickable card. Emit the JSON as a single line (no internal newlines) so the regex `<!--triage-menu:v1\s*([\s\S]*?)\s*-->` reliably extracts it.
 
    Track which item number maps to which `bullet_id_hash` + `source_session_slug` so the user's response can be routed back to the right tool call.
 
