@@ -18,6 +18,36 @@ This command combines mode switching and memory base loading for a quick persona
    - `kind: verify-prose` — manual verifier (asking the user, poking the UI). Surface the prose instruction; flag the item as needing manual confirmation before action.
    - `kind: untagged-forward-looking` — writer-contract violation under Decision 068. Treat as suspect; re-verify before reciting.
 
+   **Decision 023 — handoff triage menu.** After applying the Decision 068 interpretation above, identify *triage-eligible* items — bullets that need a user decision before they can stop being recited next session:
+
+   - `kind: verify-prose`
+   - `kind: verify-command` whose `result` is `timed_out`, `skipped_budget`, or has non-zero `exit_code` with non-empty `stdout` (ambiguous outcome)
+   - `kind: untagged-forward-looking`
+
+   Items pre-suppressed by the MCP server (`historical`, absence-grep resolved) do not appear in `items` at all, so they need no filtering on this side.
+
+   If zero triage-eligible items exist across all returned handoffs, skip the triage rendering entirely.
+
+   Otherwise, at the END of the **Summarize** step (after all other content), append:
+
+   ```
+   ## Carryforward triage
+
+   1. <bullet body, ≤80 chars> — _from <source_session_slug>_
+   2. ...
+
+   _Verbs: `<N> resolve` | `<N> dismiss` | `<N> elaborate`. Free-text input escapes triage._
+   ```
+
+   Track which item number maps to which `bullet_id_hash` + `source_session_slug` so the user's response can be routed back to the right tool call.
+
+   When the user replies, parse:
+
+   - `<N> resolve` — call `mcp__obsidian-context-manager__tag_handoff_item` with the item's `bullet_id_hash`, `source_session_slug`, `action: "resolve"`. Remove the item from the menu. Re-render the menu if items remain; report "triage complete" if not. **Terminal.**
+   - `<N> dismiss` — same as above with `action: "dismiss"`. **Terminal.**
+   - `<N> elaborate` — load the source session via `get_session_context`; if the bullet references a topic/decision/commit slug, fetch it via the appropriate tool. Explain the item in 2–3 sentences. Then re-present the menu (item stays). **Non-terminal.**
+   - Any other input — escape hatch: treat as the user's actual task for the session and proceed normally.
+
 3. **Arm background monitors** (run all in parallel):
    - `Monitor` with `command: "${HOME}/Projects/obsidian-claude-plugin/bin/stale-topic-check.sh"`, `description: "Stale topic check"`, `persistent: false`
    - `Monitor` with `command: "${HOME}/Projects/obsidian-claude-plugin/bin/git-commit-watch.sh"`, `description: "Git commit watcher"`, `persistent: true`
@@ -41,3 +71,4 @@ This command combines mode switching and memory base loading for a quick persona
    - Note any stale topic alerts from the bundled monitor
    - Report directives executed this session and their outcomes (one-shot vault monitors in step 4)
    - Report non-directive output captured from one-shot vault monitors
+   - If triage-eligible carryforward items exist (per Decision 023 in step 2), append the `## Carryforward triage` menu at the very end
