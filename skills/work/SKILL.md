@@ -32,10 +32,10 @@ This command combines mode switching and memory base loading for a quick work se
    ```
    <!--triage-menu:v1 {"ref":"latest"} -->
 
-   Carryforward triage available (N eligible items) — see the card below, or type `<N> resolve` / `<N> elaborate` from CLI.
+   Carryforward triage available — see the card below, or type `<N> resolve` / `<N> elaborate` from CLI.
    ```
 
-   Replace `N` with the count of triage-eligible items. The HTML comment is invisible in rendered markdown; the frontend regex `<!--triage-menu:v1\s*([\s\S]*?)\s*-->` extracts the payload. Emit the JSON as a single line (no internal newlines).
+   The bridge frontend fetches the actual items[] and renders a header with the authoritative count (`Carryforward triage (N items)`); do not state a count in the LLM text — your view of `handoffs[].items[]` does not match the bridge's session-file scan, so any count you write will diverge from what the card shows. The HTML comment is invisible in rendered markdown; the frontend regex `<!--triage-menu:v1\s*([\s\S]*?)\s*-->` extracts the payload. Emit the JSON as a single line (no internal newlines).
 
    **Decision 024 — bridge UI bulk-resolve bypasses the LLM.** When the user clicks Submit on the triage card, the chat-bridge frontend POSTs each row to `/api/triage/resolve` directly. You will not see those resolves as chat messages — they never reach the LLM. You are invoked only on Elaborate clicks and CLI input.
 
