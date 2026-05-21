@@ -32,13 +32,12 @@ description: Load rolling memory base from recent sessions
 
    Replace `N` with the count of triage-eligible items. The HTML comment is invisible in rendered markdown; the frontend regex `<!--triage-menu:v1\s*([\s\S]*?)\s*-->` extracts the payload. Emit the JSON as a single line (no internal newlines).
 
-   Track which item number maps to which `bullet_id_hash` + `source_session_slug` in your in-context view — apply the same filter (`verify-prose` + `untagged-forward-looking`) in handoff order and number sequentially. The bridge's server endpoint applies the identical filter, so its numbering matches yours; user replies referencing `1`, `2`, … resolve to the same items.
+   **Decision 024 — bridge UI bulk-resolve bypasses the LLM.** When the user clicks Submit on the triage card, the chat-bridge frontend POSTs each row to `/api/triage/resolve` directly. You will not see those resolves as chat messages — they never reach the LLM. You are invoked only on Elaborate clicks and CLI input.
 
-   When the user replies, parse:
+   When you DO receive a triage-related message, parse:
 
-   - `triage:N=done,M=done,...` — **bulk submit** (chat-bridge UI). For each `N=done`, look up the item's `bullet_id_hash` + `source_session_slug` in your in-context n→item mapping. Call `mcp__obsidian-context-manager__tag_handoff_item` **serially, one after another, NOT in parallel** with `action: "resolve"` for each (items may share a source session file; parallel writes corrupt it). After all calls succeed, emit `<!--triage-update:v1 {"removed":[N,M,...]} -->` on its own line (single-line JSON, HTML comment) followed by a brief "Resolved X items." confirmation. **Do NOT re-render the menu** — the bridge consumes the marker and mutates the original card in place. **Terminal.**
-   - `<N> elaborate` — load the source session via `get_session_context`; if the bullet references a topic/decision/commit slug, fetch it via the appropriate tool. Explain the item in 2–3 sentences. **Do NOT re-render the menu** and **do NOT emit any update marker** — the original card persists in the bridge; the user can resolve or elaborate further from it. **Non-terminal.**
-   - `<N> resolve` or `<N> dismiss` — back-compat single-action for CLI / non-bridge clients. Call `tag_handoff_item` with the matching `action`, then emit `<!--triage-update:v1 {"removed":[N]} -->` followed by "Resolved item N." Do NOT re-render the menu. **Terminal.**
+   - `<N> elaborate` — locate item N by applying the filter (`verify-prose` + `untagged-forward-looking`) over `get_memory_base.handoffs[].items[]` in handoff order, then take the N-th surviving item. Load the source session via `get_session_context`; if the bullet references a topic/decision/commit slug, fetch it via the appropriate tool. Explain in 2–3 sentences. **Do NOT re-render the menu** and **do NOT emit any update marker** — the original card persists in the bridge. **Non-terminal.**
+   - `<N> resolve` or `<N> dismiss` — CLI fallback for non-bridge clients. Locate item N the same way, call `tag_handoff_item` with the matching `action`, then emit `<!--triage-update:v1 {"removed":[N]} -->` followed by "Resolved item N." Do NOT re-render the menu. **Terminal.**
    - Any other input — escape hatch: treat as the user's actual task for the session and proceed normally.
 
 2. **Arm background monitors** (run all in parallel):
