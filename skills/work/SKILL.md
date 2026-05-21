@@ -27,15 +27,17 @@ This command combines mode switching and memory base loading for a quick work se
 
    If zero triage-eligible items exist across all returned handoffs, skip the triage rendering entirely.
 
-   Otherwise, at the END of the **Summarize** step (after all other content), emit ONLY the minimal marker. The chat-bridge frontend fetches `items[]` from `/api/triage/current?mode=<active>` the moment the closing `-->` arrives and renders the card instantly — the LLM no longer streams item bodies or hashes:
+   Otherwise, at the END of the **Summarize** step (after all other content), emit ONLY the minimal marker. The chat-bridge frontend fetches `items[]` from `/api/triage/current?mode=<active>&working_directory=<cwd>` the moment the closing `-->` arrives and renders the card instantly — the LLM no longer streams item bodies or hashes:
 
    ```
-   <!--triage-menu:v1 {"ref":"latest"} -->
+   <!--triage-menu:v1 {"ref":"latest","working_directory":"<CWD>"} -->
 
    Carryforward triage available — see the card below, or type `<N> resolve` / `<N> elaborate` from CLI.
    ```
 
-   The bridge frontend fetches the actual items[] and renders a header with the authoritative count (`Carryforward triage (N items)`); do not state a count in the LLM text — your view of `handoffs[].items[]` does not match the bridge's session-file scan, so any count you write will diverge from what the card shows. The HTML comment is invisible in rendered markdown; the frontend regex `<!--triage-menu:v1\s*([\s\S]*?)\s*-->` extracts the payload. Emit the JSON as a single line (no internal newlines).
+   **Decision 026 — populate `working_directory`** with the absolute path shown in the session env block as `Primary working directory: ...`. The bridge uses it to mirror MCP's session-selection algorithm (mtime DESC + CWD-priority), so the card's items match the same set you see in `get_memory_base.handoffs[].items[]` after filtering to `verify-prose` + `untagged-forward-looking`. Omitting the field is a soft fallback (the bridge degrades to filename-DESC selection across all projects), but emit it whenever the env block contains a `Primary working directory:` line.
+
+   The bridge frontend renders a header with the authoritative count (`Carryforward triage (N items)`); do not state a count in the LLM text. The HTML comment is invisible in rendered markdown; the frontend regex `<!--triage-menu:v1\s*([\s\S]*?)\s*-->` extracts the payload. Emit the JSON as a single line (no internal newlines).
 
    **Decision 024 — bridge UI bulk-resolve bypasses the LLM.** When the user clicks Submit on the triage card, the chat-bridge frontend POSTs each row to `/api/triage/resolve` directly. You will not see those resolves as chat messages — they never reach the LLM. You are invoked only on Elaborate clicks and CLI input.
 
