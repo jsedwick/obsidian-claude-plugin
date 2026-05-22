@@ -35,7 +35,7 @@ This command combines mode switching and memory base loading for a quick persona
    Carryforward triage available — see the card below, or type `<N> resolve` / `<N> elaborate` from CLI.
    ```
 
-   **Decision 026 — populate `working_directory`** with the absolute path shown in the session env block as `Primary working directory: ...`. The bridge uses it to mirror MCP's session-selection algorithm (mtime DESC + CWD-priority), so the card's items match the same set you see in `get_memory_base.handoffs[].items[]` after filtering to `verify-prose` + `untagged-forward-looking`. Omitting the field is a soft fallback (the bridge degrades to filename-DESC selection across all projects), but emit it whenever the env block contains a `Primary working directory:` line.
+   **Decision 026 — populate `working_directory`** with the absolute path shown in the session env block as `Primary working directory: ...`. The bridge uses it to mirror MCP's session-selection algorithm (mtime DESC + CWD-priority), so the card's items match the same set the LLM sees in `get_memory_base.triage_items[]` (Decision 027 — flat list, deduped, CWD-bucket-sorted, 1-indexed). Omitting the field is a soft fallback (the bridge degrades to filename-DESC selection across all projects), but emit it whenever the env block contains a `Primary working directory:` line.
 
    The bridge frontend renders a header with the authoritative count (`Carryforward triage (N items)`); do not state a count in the LLM text. The HTML comment is invisible in rendered markdown; the frontend regex `<!--triage-menu:v1\s*([\s\S]*?)\s*-->` extracts the payload. Emit the JSON as a single line (no internal newlines).
 
@@ -43,8 +43,8 @@ This command combines mode switching and memory base loading for a quick persona
 
    When you DO receive a triage-related message, parse:
 
-   - `<N> elaborate` — locate item N by applying the filter (`verify-prose` + `untagged-forward-looking`) over `get_memory_base.handoffs[].items[]` in handoff order, then take the N-th surviving item. Load the source session via `get_session_context`; if the bullet references a topic/decision/commit slug, fetch it via the appropriate tool. Explain in 2–3 sentences. **Do NOT re-render the menu** and **do NOT emit any update marker** — the original card persists in the bridge. **Non-terminal.**
-   - `<N> resolve` or `<N> dismiss` — CLI fallback for non-bridge clients. Locate item N the same way, call `tag_handoff_item` with the matching `action`, then emit `<!--triage-update:v1 {"removed":[N]} -->` followed by "Resolved item N." Do NOT re-render the menu. **Terminal.**
+   - `<N> elaborate` — look up `get_memory_base.triage_items[N-1]` (Decision 027 — 1-indexed flat list, already deduped + CWD-sorted to match the bridge UI). Load the source session via `get_session_context` using the item's `source_session_slug`; if the body references a topic/decision/commit slug, fetch it via the appropriate tool. Explain in 2–3 sentences. **Do NOT re-render the menu** and **do NOT emit any update marker** — the original card persists in the bridge. **Non-terminal.**
+   - `<N> resolve` or `<N> dismiss` — CLI fallback for non-bridge clients. Look up `triage_items[N-1]` the same way, call `tag_handoff_item` with `source_session_slug` + `bullet_id_hash` + matching `action`, then emit `<!--triage-update:v1 {"removed":[N]} -->` followed by "Resolved item N." Do NOT re-render the menu. **Terminal.**
    - Any other input — escape hatch: treat as the user's actual task for the session and proceed normally.
 
 3. **Arm background monitors** (run all in parallel):
