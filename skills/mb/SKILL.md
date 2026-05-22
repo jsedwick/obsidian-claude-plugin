@@ -34,7 +34,7 @@ description: Load rolling memory base from recent sessions
 
    The bridge frontend renders a header with the authoritative count (`Carryforward triage (N items)`); do not state a count in the LLM text. The HTML comment is invisible in rendered markdown; the frontend regex `<!--triage-menu:v1\s*([\s\S]*?)\s*-->` extracts the payload. Emit the JSON as a single line (no internal newlines).
 
-   **Decision 024 — bridge UI bulk-resolve bypasses the LLM.** When the user clicks Submit on the triage card, the chat-bridge frontend POSTs each row to `/api/triage/resolve` directly. You will not see those resolves as chat messages — they never reach the LLM. You are invoked only on Elaborate clicks and CLI input.
+   **Decision 024 — bridge UI bulk-resolve bypasses the LLM; bridge passively notifies on next turn.** When the user clicks Submit on the triage card, the chat-bridge frontend POSTs each row to `/api/triage/resolve` directly — those POSTs do NOT invoke an LLM turn. The bridge accumulates resolved Ns per-session and prepends a `<!--triage-update:v1 {"removed":[N,...]}-->` HTML comment to the user's next message. When you see this marker on your input, silently remove those Ns from your in-memory `triage_items[]` view — do NOT acknowledge it in your reply (it's a backchannel update, not a question). The marker is invisible in rendered markdown. You are still invoked only on Elaborate clicks and CLI input.
 
    When you DO receive a triage-related message, parse:
 
