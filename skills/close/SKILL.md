@@ -42,15 +42,27 @@ The Phase 1 close_session call will return commit analysis with `session_data`. 
 
 1. Review the commit analysis and suggested topic updates
 2. Update relevant topics using `update_document` (NEVER use Edit/Write directly — they don't track file access for vault_custodian)
-3. **DO NOT commit topic updates** - they will be included in vault custodian's finalization
-4. **DO NOT re-run Phase 1 steps** - skip straight to Phase 2 finalization
-5. Call `close_session` DIRECTLY with the exact parameters shown in Phase 1's output:
+3. **Add forward-looking carryforward items to the canonical file (Decision 028 Phase 4).** For each forward-looking bullet that next-session needs to act on, call `mcp__obsidian-context-manager__add_carryforward_item`:
+   ```typescript
+   add_carryforward_item({
+     body: "Bridge restart owed for `860df06`",
+     verifier: "bridge PID start time vs `git log -1 --format=%cI 860df06`",
+     cwd: "/path/from/env-block-Primary-working-directory"  // REQUIRED
+   })
+   ```
+   - One call per bullet. The tool is hash-idempotent — duplicate bullets become no-ops.
+   - `cwd` is REQUIRED and must be the env block's `Primary working directory:` value verbatim.
+   - `kind` is inferred from `verifier`: backtick-wrapped command → `verify-command`; plain text → `verify-prose`; absent → `untagged-forward-looking` (discouraged — prefer to either add a verifier or drop the item).
+   - Skip immutable past events (`[historical]`) — those go in the narrative prose of the `handoff` parameter, not into canonical.
+4. **DO NOT commit topic updates** - they will be included in vault custodian's finalization
+5. **DO NOT re-run Phase 1 steps** - skip straight to Phase 2 finalization
+6. Call `close_session` DIRECTLY with the exact parameters shown in Phase 1's output:
    ```typescript
    close_session({
      summary: "...",
      topic: "...",
      finalize: true,
-     handoff: "[paste generated handoff notes here]",  // REQUIRED (Decision 052)
+     handoff: "[narrative prose summarizing what happened, what we tried, and what to watch for — NO checkbox bullets]",  // REQUIRED (Decision 052)
      session_data: { ...the session_data from Phase 1... }
    })
    ```
@@ -61,21 +73,23 @@ The Phase 1 close_session call will return commit analysis with `session_data`. 
 - Do NOT analyze the conversation again
 - ONLY call close_session with finalize: true and the session_data
 
-## Handoff Format (Decision 068)
+## Closing Notes Format (Decision 028 Phase 4 + Decision 068)
 
-The `handoff` parameter MUST use the verifier-tagged carryforward format. Every forward-looking item is a checkbox bullet paired with a `**verify:**` clause; immutable past events are tagged `[historical]` and need no verifier. Narrative-prose handoffs produce zero parseable items — the chat-bridge's Open Items panel and `/vault:mb` programmatic suppression both depend on this format.
+Forward-looking carryforward items live in the canonical `open-carryforward.md` file (via `add_carryforward_item` in step 3 above). The `handoff` parameter passed to `close_session` is **narrative-only prose** — no `- [ ]` checkbox bullets. The MCP server writes this prose into the session file's `## Closing notes` section.
 
 ```
-- [ ] PR #42 awaiting merge — **verify:** `gh pr view 42 --json state`
-- [ ] bridge restart owed for `860df06` — **verify:** bridge PID start time vs `git log -1 --format=%cI 860df06`
-- [ ] smoke test owed for `dc7ff03` — **verify:** ask user, or poke the feature in the bridge UI
-- [historical] Decision 067 shipped in `70d3298` — no verifier (immutable past event)
+This session shipped Decision 067 in `70d3298` after exploring two alternatives (X
+and Y). We initially tried X but reverted after the integrity check failed on
+malformed input — Y handles the edge case cleanly. Next session should watch for
+PR #42 reaching its review window and confirm the bridge restart picked up the
+new behavior.
 ```
 
-Rules:
-- Every `- [ ]` bullet must have a `**verify:**` clause (command in backticks for `verify-command`, plain text for `verify-prose`).
-- Items without a verifier must be tagged `[historical]` or dropped at write-time.
-- Narrative summary paragraphs are fine alongside the bullets — but the carryforward state itself goes in bullet form.
+Rules for the `handoff` narrative:
+- Prose paragraphs that capture what happened, what was tried, and watch-fors that aren't actionable bullets.
+- `[historical]` past events that next session might want context on go here as prose (not bullets).
+- Forward-looking actionable items (restarts owed, smoke tests owed, follow-up fixes) belong in `add_carryforward_item` calls, NOT in the narrative.
+- An empty handoff parameter triggers a post-write integrity check failure — always emit at least a one-sentence summary.
 
 ## Final Summary Format
 
